@@ -1,36 +1,101 @@
 from rag.data_worker import retrieve_data
-from rag.embedder import load_vectorstore
 
 from langchain_google_genai import GoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnableLambda
 from langchain.prompts import PromptTemplate
 from langchain_community.vectorstores import FAISS
-from langchain.schema.runnable import RunnablePassthrough
-
-from typing import Dict, List, Any
+import faiss
+import pickle
 import json
 import os
 
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBF-wxgd4Fm_3sTFcAL3u-WaZQh7aLzqAM"
 
-llm_model = GoogleGenerativeAI(model="gemini-2.0-flash")
-embeddings = GoogleGenerativeAIEmbeddings(model="embedding-001")
-
+llm_model = GoogleGenerativeAI(model="models/gemini-2.0-flash")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+index_dir = "rag/news_index"
+# Add this after loading vectorstore
+def load_vectorstore():
+    print(f"Loading vectorstore from: {os.path.abspath(index_dir)}")
+    
+    index_path = os.path.join(index_dir, "index.faiss")
+    pickle_path = os.path.join(index_dir, "index.pkl")
+    metadata_path = os.path.join(index_dir, "news_metadata.pkl")
+    
+    print(f"Checking index file: {index_path} (exists: {os.path.exists(index_path)})")
+    print(f"Checking pickle file: {pickle_path} (exists: {os.path.exists(pickle_path)})")
+    
+    # Try to load existing index
+    try:
+        if os.path.exists(index_path) and os.path.exists(pickle_path):
+            # Load FAISS index
+            index = faiss.read_index(index_path)
+            print(f"FAISS index loaded with {index.ntotal} entries")
+            
+            # Load docstore and index mapping
+            with open(pickle_path, "rb") as f:
+                docstore, index_to_docstore_id = pickle.load(f)
+            
+            # Create vectorstore
+            vectorstore = FAISS(
+                embedding_function=embeddings,
+                index=index,
+                docstore=docstore,
+                index_to_docstore_id=index_to_docstore_id
+            )
+            
+            # Load metadata if available
+            metadata = []
+            if os.path.exists(metadata_path):
+                with open(metadata_path, "rb") as f:
+                    metadata = pickle.load(f)
+                    print(f"Metadata loaded with {len(metadata)} entries")
+            
+            return vectorstore, metadata
+        else:
+            raise FileNotFoundError(f"Required index files not found in {index_dir}")
+            
+    except Exception as e:
+        print(f"Error loading vectorstore: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 vectorstore, metadata = load_vectorstore()
-retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+def inspect_vectorstore(vs):
+    try:
+        print(f"DEBUG - Vectorstore type: {type(vs)}")
+        # For FAISS
+        if hasattr(vs, "index"):
+            print(f"DEBUG - Index size: {vs.index.ntotal}")
+            
+        # For document inspection, try to get a sample
+        sample_query = "fund"
+        sample_docs = vs.similarity_search(sample_query, k=2)
+        print(f"DEBUG - Sample query '{sample_query}' returned {len(sample_docs)} docs")
+        if sample_docs:
+            print(f"DEBUG - Sample doc: {sample_docs[0].page_content[:100]}...")
+    except Exception as e:
+        print(f"DEBUG - Error inspecting vectorstore: {e}")
+
+inspect_vectorstore(vectorstore)
+
+retriever = vectorstore.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 5, "fetch_k": 10}
+)
 
 ticker_prompt = PromptTemplate(
     input_variables=["question"],
     template="""
-You are a helpful financial assistant.
+    You are a helpful financial assistant.
 
-Given the user question, extract the most relevant fund **ticker** or **sector name**.
+    Given the user question, extract the most relevant fund **ticker** or **sector name**.
 
-Only return the ticker or sector name. Respond with only the value — no extra words or formatting.
+    Only return the ticker or sector name. Respond with only the value — no extra words or formatting.
 
-Question: {question}
-Ticker:
-"""
+    Question: {question}
+    Ticker:
+    """
 )
 
 # Debug print function
@@ -89,22 +154,44 @@ def fund_analysis_workflow():
         
         try:
             # Enhance the search query with fund context
+            # In get_relevant_docs function
+# Instead of combining everything, try:
+            search_text = question  # Use original question first
             sectors = fund_data.get('sectors', [])
             sectors_text = ' '.join(sectors) if isinstance(sectors, list) else ''
-            search_text = f"{question} {sectors_text}"
             
             # Get relevant documents
             docs = retriever.get_relevant_documents(search_text)
+            if len(docs) < 2:
+                print(f"DEBUG - Few results, trying search with ticker: {ticker}")
+                docs = retriever.get_relevant_documents(f"{ticker} {question}")
+                
+            # Try with sectors only as last resort
+            if len(docs) < 2 and sectors_text:
+                print(f"DEBUG - Still few results, trying with sectors: {sectors_text}")
+                docs = retriever.get_relevant_documents(sectors_text)
             print(f"DEBUG - Retrieved {len(docs)} relevant documents")
             
             # Format the documents for better context
             formatted_docs = []
             for doc in docs:
-                doc_dict = json.loads(doc.page_content) if isinstance(doc.page_content, str) and doc.page_content.startswith("{") else {"content": doc.page_content}
-                # Add metadata if available
-                if hasattr(doc, "metadata"):
-                    doc_dict.update(doc.metadata)
-                formatted_docs.append(doc_dict)
+                # More robust parsing
+                try:
+                    if isinstance(doc.page_content, str) and doc.page_content.strip().startswith("{"):
+                        doc_dict = json.loads(doc.page_content)
+                    else:
+                        doc_dict = {"content": doc.page_content}
+                        
+                    # Print actual document content for debugging
+                    print(f"DEBUG - Doc content preview: {doc.page_content[:100]}...")
+                        
+                    # Add metadata if available
+                    if hasattr(doc, "metadata"):
+                        doc_dict.update(doc.metadata)
+                    formatted_docs.append(doc_dict)
+                except Exception as e:
+                    print(f"DEBUG - Error parsing document: {e}")
+                    formatted_docs.append({"content": doc.page_content})
             
         except Exception as e:
             print(f"DEBUG - Error retrieving relevant docs: {e}")
@@ -150,6 +237,15 @@ answer_prompt = PromptTemplate(
     input_variables=["question", "ticker", "fund_data", "relevant_docs"],
     template="""You are a financial advisor assistant specialized in fund analysis.
     Answer the user's question using the provided fund data and relevant news articles.
+    Format the following data strictly in Markdown.
+
+    - Use proper headers (###) for each section.
+    - Use bullet points where applicable.
+    - Insert actual line breaks (Enter twice) for new paragraphs and after each section.
+    - Do not include \\n or escaped newlines.
+    - Bold important points.
+
+    Here is the data:
     
     User Question: {question}
     
@@ -162,11 +258,22 @@ answer_prompt = PromptTemplate(
     
     Relevant News:
     {relevant_docs}
-    
-    Provide a comprehensive but concise answer with specific references to the data provided when applicable.
-    Focus on directly answering the user's question with relevant information."""
-)
 
+    Be able to map the funds holdings and sectors which are relavent to the question.
+    Provide a comprehensive but concise answer with specific references to the data provided when applicable.
+    Focus on directly answering the user's question with relevant information.
+
+    Respond in the following format:
+
+    Article Analysis: Analyze the articles and state why you think it affects the stock prices in a good or bad way
+    
+    Relavent Stock Price (if it's not empty): - [Stock Price Change %]
+    Relavent Holdings (if it's not empty): - [Top Holdings]
+    Relavent Sectors (if it's not empty): - [Top Sectors]
+
+    Suggestions: Your thoughts
+    """
+)
 # Create the workflow
 financial_chain = fund_analysis_workflow()
 

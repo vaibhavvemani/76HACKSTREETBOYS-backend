@@ -133,11 +133,11 @@ def retrieve_data(ticker):
 
     fund_prices = cursor.fetchall()
 
-    cursor.execute("select * from fund_holdings where ticker = ? order by weight desc limit 20", (ticker, ))
+    cursor.execute("select * from fund_holdings where ticker = ? order by weight desc limit 50", (ticker, ))
 
     fund_holdings = cursor.fetchall()
 
-    cursor.execute("select * from fund_sectors where ticker = ?", (ticker, ))
+    cursor.execute("select * from fund_sectors where ticker = ? order by weight desc limit 50", (ticker, ))
 
     fund_sectors = cursor.fetchall()
 
