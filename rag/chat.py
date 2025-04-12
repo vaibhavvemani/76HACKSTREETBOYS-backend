@@ -12,6 +12,7 @@ import os
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBF-wxgd4Fm_3sTFcAL3u-WaZQh7aLzqAM"
 
 llm_model = GoogleGenerativeAI(model="models/gemini-2.0-flash")
+
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 index_dir = "rag/news_index"
 # Add this after loading vectorstore
@@ -235,43 +236,48 @@ def fund_analysis_workflow():
 # 4. Answer Generation Chain
 answer_prompt = PromptTemplate(
     input_variables=["question", "ticker", "fund_data", "relevant_docs"],
-    template="""You are a financial advisor assistant specialized in fund analysis.
-    Answer the user's question using the provided fund data and relevant news articles.
-    Format the following data strictly in Markdown.
-
-    - Use proper headers (###) for each section.
-    - Use bullet points where applicable.
-    - Insert actual line breaks (Enter twice) for new paragraphs and after each section.
-    - Do not include \\n or escaped newlines.
-    - Bold important points.
+    template="""
+    You are a financial advisor assistant specialized in fund analysis.
+    Given the user question, fund ticker, fund data, and relavant news articles, provide a comprehensive analysis.
+    Your response should be clear, concise, and actionable. Render key points in bold.
 
     Here is the data:
-    
-    User Question: {question}
-    
+
+    User Question: {question}   
+
     Fund Ticker: {ticker}
-    
+
     Fund Data:
     - Recent Prices: {fund_data[fund_prices]}
     - Top Holdings: {fund_data[fund_holdings]}
     - Sectors: {fund_data[fund_sectors]}
-    
+
     Relevant News:
     {relevant_docs}
 
-    Be able to map the funds holdings and sectors which are relavent to the question.
-    Provide a comprehensive but concise answer with specific references to the data provided when applicable.
-    Focus on directly answering the user's question with relevant information.
-
     Respond in the following format:
+    (render this in bold)News Analysis:
+    - Analyse how the news affects the fund/sector, reason over the users provided data
+    - Mention whether the effects are positive or negative and why
+    - Summarize all articles provided and give a short consise and clear answer in a maximum of 4 sentences
 
-    Article Analysis: Analyze the articles and state why you think it affects the stock prices in a good or bad way
-    
-    Relavent Stock Price (if it's not empty): - [Stock Price Change %]
-    Relavent Holdings (if it's not empty): - [Top Holdings]
-    Relavent Sectors (if it's not empty): - [Top Sectors]
+    Relevant Stock Price (if provided):
+    - List percentage of change in the stock price
+    - if not provided, don't mention this section
 
-    Suggestions: Your thoughts
+    Relevant Holdings (if provided):
+    - Mention any top holdings directly affected by the news or the user’s question
+    - if not provided, don't mention this section
+
+    Relevant Sectors (if provided):
+    - Include sectors that are sensitive to or impacted by the issue in the question
+    - if not provided, don't mention this section
+
+    (render in bold)Suggestions:
+    - Share investment guidance, like which sectors look strong or whether to stay cautious
+    - Keep it actionable and relevant to the user's question
+    - Your suggestions can be your own answers feel free to use the data provided or take your own data.
+    - Keep your suggestions short and concise, no more than 2 sentences
     """
 )
 # Create the workflow
