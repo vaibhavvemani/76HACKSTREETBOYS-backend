@@ -16,7 +16,6 @@ META_PATH = os.path.join(INDEX_DIR, "index.pkl")
 llm = GoogleGenerativeAI(model="models/gemini-2.0-flash-thinking-exp")
 embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
-# === Load or Create Vectorstore ===
 def load_vectorstore():
     try:
         index_path = os.path.join(INDEX_DIR, "index.faiss")
@@ -69,14 +68,11 @@ META_PATH = os.path.join(INDEX_DIR, "news_metadata.pkl")
 def save_vectorstore(vectorstore, metadata):
     os.makedirs(INDEX_DIR, exist_ok=True)
 
-    # Save FAISS index
     faiss.write_index(vectorstore.index, os.path.join(INDEX_DIR, "index.faiss"))
 
-    # Save FAISS internal docstore and index map
     with open(os.path.join(INDEX_DIR, "index.pkl"), "wb") as f:
         pickle.dump((vectorstore.docstore, vectorstore.index_to_docstore_id), f)
 
-    # Save your additional metadata
     with open(META_PATH, "wb") as f:
         pickle.dump(metadata, f)
 
@@ -97,7 +93,6 @@ def process_articles(articles):
             continue
 
         try:
-            # Summarize with Gemini
             prompt = f"""The following article is a financial news piece. 
             Summarize it clearly while preserving the financial context, including company and ticker names.
             Be thorough with your summary, include all important details.

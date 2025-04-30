@@ -1,5 +1,5 @@
-from scrape_machine import scrape_cnbc, scrape_moneycontrol, scrape_businesstoday
-from embedder import process_articles, load_vectorstore
+from rag.scrape_machine import scrape_cnbc, scrape_moneycontrol, scrape_businesstoday
+from rag.embedder import process_articles, load_vectorstore
 import os
 
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBF-wxgd4Fm_3sTFcAL3u-WaZQh7aLzqAM"

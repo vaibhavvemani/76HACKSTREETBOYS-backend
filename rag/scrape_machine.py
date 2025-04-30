@@ -28,7 +28,6 @@ def scrape_cnbc():
             if not title or not link or not link.startswith("http") or "/video/" in link:
                 continue
 
-            # Get full article content
             try:
                 article_response = requests.get(link, headers=headers, timeout=10)
                 article_soup = BeautifulSoup(article_response.text, "html.parser")
@@ -42,7 +41,7 @@ def scrape_cnbc():
                 "title": title,
                 "content": article_text if article_text else "⚠️ Article content not available (may be a video or non-HTML article)"
             })
-            time.sleep(2)  # be polite
+            time.sleep(2)
 
     return news_data
 
@@ -115,7 +114,7 @@ def scrape_moneycontrol(pages=5):
                     "content": content if content else "⚠️ Article content not available (may be a video or non-HTML article)"
                 })
 
-                time.sleep(2)  # be polite
+                time.sleep(2)
         
 
     return articles

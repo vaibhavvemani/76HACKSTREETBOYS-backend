@@ -15,7 +15,6 @@ llm_model = GoogleGenerativeAI(model="models/gemini-2.0-flash")
 
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 index_dir = "rag/news_index"
-# Add this after loading vectorstore
 def load_vectorstore():
     print(f"Loading vectorstore from: {os.path.abspath(index_dir)}")
     
@@ -26,18 +25,14 @@ def load_vectorstore():
     print(f"Checking index file: {index_path} (exists: {os.path.exists(index_path)})")
     print(f"Checking pickle file: {pickle_path} (exists: {os.path.exists(pickle_path)})")
     
-    # Try to load existing index
     try:
         if os.path.exists(index_path) and os.path.exists(pickle_path):
-            # Load FAISS index
             index = faiss.read_index(index_path)
             print(f"FAISS index loaded with {index.ntotal} entries")
             
-            # Load docstore and index mapping
             with open(pickle_path, "rb") as f:
                 docstore, index_to_docstore_id = pickle.load(f)
             
-            # Create vectorstore
             vectorstore = FAISS(
                 embedding_function=embeddings,
                 index=index,
@@ -45,7 +40,6 @@ def load_vectorstore():
                 index_to_docstore_id=index_to_docstore_id
             )
             
-            # Load metadata if available
             metadata = []
             if os.path.exists(metadata_path):
                 with open(metadata_path, "rb") as f:
@@ -65,7 +59,6 @@ vectorstore, metadata = load_vectorstore()
 def inspect_vectorstore(vs):
     try:
         print(f"DEBUG - Vectorstore type: {type(vs)}")
-        # For FAISS
         if hasattr(vs, "index"):
             print(f"DEBUG - Index size: {vs.index.ntotal}")
             
@@ -82,7 +75,8 @@ inspect_vectorstore(vectorstore)
 
 retriever = vectorstore.as_retriever(
     search_type="similarity",
-    search_kwargs={"k": 5, "fetch_k": 10}
+    search_kwargs={"k": 5, "fetch_k": 10,}
+    
 )
 
 ticker_prompt = PromptTemplate(
@@ -99,12 +93,10 @@ ticker_prompt = PromptTemplate(
     """
 )
 
-# Debug print function
 def debug_print(name, value):
     print(f"DEBUG - {name}: {value}")
     return value
 
-# Process ticker to ensure it's just the symbol (no dictionary structure)
 def process_ticker(llm_output):
     ticker = llm_output.strip()
     print(f"DEBUG - LLM returned ticker: '{ticker}'")
@@ -112,9 +104,7 @@ def process_ticker(llm_output):
 
 ticker_chain = ticker_prompt | llm_model | process_ticker
 
-# Chain it all together with proper LangChain workflow - completely rewritten with debug prints
 def fund_analysis_workflow():
-    # First step: Extract question and get ticker
     def extract_ticker(input_dict):
         question = input_dict["question"]
         print(f"DEBUG - Received question: {question}")
@@ -127,7 +117,6 @@ def fund_analysis_workflow():
             "ticker": ticker
         }
     
-    # Second step: Get fund data
     def get_fund_data(input_dict):
         question = input_dict["question"]
         ticker = input_dict["ticker"]
@@ -146,7 +135,6 @@ def fund_analysis_workflow():
             "fund_data": fund_data
         }
     
-    # Third step: Get relevant documents
     def get_relevant_docs(input_dict):
         question = input_dict["question"]
         ticker = input_dict["ticker"]
@@ -154,39 +142,30 @@ def fund_analysis_workflow():
         print(f"DEBUG - Getting relevant docs for question: {question}")
         
         try:
-            # Enhance the search query with fund context
-            # In get_relevant_docs function
-# Instead of combining everything, try:
-            search_text = question  # Use original question first
+            search_text = question 
             sectors = fund_data.get('sectors', [])
             sectors_text = ' '.join(sectors) if isinstance(sectors, list) else ''
             
-            # Get relevant documents
             docs = retriever.get_relevant_documents(search_text)
             if len(docs) < 2:
                 print(f"DEBUG - Few results, trying search with ticker: {ticker}")
                 docs = retriever.get_relevant_documents(f"{ticker} {question}")
                 
-            # Try with sectors only as last resort
             if len(docs) < 2 and sectors_text:
                 print(f"DEBUG - Still few results, trying with sectors: {sectors_text}")
                 docs = retriever.get_relevant_documents(sectors_text)
             print(f"DEBUG - Retrieved {len(docs)} relevant documents")
             
-            # Format the documents for better context
             formatted_docs = []
             for doc in docs:
-                # More robust parsing
                 try:
                     if isinstance(doc.page_content, str) and doc.page_content.strip().startswith("{"):
                         doc_dict = json.loads(doc.page_content)
                     else:
                         doc_dict = {"content": doc.page_content}
                         
-                    # Print actual document content for debugging
                     print(f"DEBUG - Doc content preview: {doc.page_content[:100]}...")
                         
-                    # Add metadata if available
                     if hasattr(doc, "metadata"):
                         doc_dict.update(doc.metadata)
                     formatted_docs.append(doc_dict)
@@ -205,7 +184,6 @@ def fund_analysis_workflow():
             "relevant_docs": formatted_docs
         }
     
-    # Fourth step: Generate answer
     def generate_answer(input_dict):
         print(f"DEBUG - Generating answer with keys: {input_dict.keys()}")
         
@@ -216,13 +194,11 @@ def fund_analysis_workflow():
             relevant_docs=input_dict["relevant_docs"]
         )
         
-        # Pass to LLM
         answer = llm_model.invoke(response)
         print(f"DEBUG - Generated answer")
         
         return {"answer": answer}
     
-    # Create the sequential workflow
     workflow = RunnableLambda(extract_ticker).pipe(
         RunnableLambda(get_fund_data)
     ).pipe(
@@ -233,7 +209,6 @@ def fund_analysis_workflow():
     
     return workflow
 
-# 4. Answer Generation Chain
 answer_prompt = PromptTemplate(
     input_variables=["question", "ticker", "fund_data", "relevant_docs"],
     template="""
@@ -280,12 +255,4 @@ answer_prompt = PromptTemplate(
     - Keep your suggestions short and concise, no more than 2 sentences
     """
 )
-# Create the workflow
 financial_chain = fund_analysis_workflow()
-
-# Example usage
-# if __name__ == "__main__":
-#     user_question = "What's the latest on QQQ fund?"
-#     print("📦 Loaded FAISS vectorstore and metadata")
-#     result = financial_chain.invoke({"question": user_question})
-#     print("\n✅ Final Answer:\n", result["answer"])
