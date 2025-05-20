@@ -1,4 +1,4 @@
-# 🧠 NewsSense — *Why Is My Fund Down?*
+# NewsSense — *Why Is My Fund Down?*
 
 **NewsSense** is an intelligent, news-based explanation engine that helps users understand why a particular stock or mutual fund is rising or falling — by analyzing **real-time news scraped directly from the web**, with **zero reliance on scraper APIs or news APIs**.
 
@@ -6,18 +6,18 @@ Built with a powerful **LangChain pipeline**, NewsSense tracks indirect relation
 
 ---
 
-## 🚀 Features
+## Features
 
-- 🔍 **Ask Anything Finance** — Enter queries like _"Why is QQQ down today?"_ and get an AI-generated explanation from recent news.
-- ⚡ **Groq-Powered Ticker Detection** — Ultra-fast extraction of company or fund tickers from natural language.
-- 🧠 **LangChain RAG Pipeline** — Retrieval-Augmented Generation pipeline that connects tickers, holdings, and news stories.
-- 🏦 **Holdings Intelligence** — If a fund is queried, its holdings are used to identify potential causes in the market ecosystem.
-- 📰 **Custom Web Scraping** — Scrapes real-time news from the open web using in-house HTML parsing — **no APIs involved**.
-- 📚 **Vector Database (FAISS)** — Stores semantically embedded news articles for fast and relevant similarity search.
+-  **Ask Anything Finance** — Enter queries like _"Why is QQQ down today?"_ and get an AI-generated explanation from recent news.
+-  **Groq-Powered Ticker Detection** — Ultra-fast extraction of company or fund tickers from natural language.
+-  **LangChain RAG Pipeline** — Retrieval-Augmented Generation pipeline that connects tickers, holdings, and news stories.
+-  **Holdings Intelligence** — If a fund is queried, its holdings are used to identify potential causes in the market ecosystem.
+-  **Custom Web Scraping** — Scrapes real-time news from the open web using in-house HTML parsing — **no APIs involved**.
+-  **Vector Database (FAISS)** — Stores semantically embedded news articles for fast and relevant similarity search.
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 | Tool         | Purpose                                 |
 |--------------|------------------------------------------|
@@ -30,7 +30,7 @@ Built with a powerful **LangChain pipeline**, NewsSense tracks indirect relation
 
 ---
 
-## 🧠 How It Works
+## How It Works
 
 1. **User Query** — e.g., _"Why is ARKK falling today?"_
 2. **Ticker Extraction** — Groq identifies the relevant ticker (`ARKK`).
@@ -41,10 +41,10 @@ Built with a powerful **LangChain pipeline**, NewsSense tracks indirect relation
 
 ---
 
-## 🖼 Example
+## Example
 
-> **🧾 Query**:  
+> **Query**:  
 > _"Why did QQQ drop this week?"_
 
-> **🤖 NewsSense**:  
+> **NewsSense**:  
 > _"QQQ, which holds major tech stocks like Apple, Amazon, and Microsoft, saw a decline largely due to a recent drop in Big Tech earnings and a hawkish Fed statement signaling rate hikes. The market reacted negatively to this macroeconomic signal."_
