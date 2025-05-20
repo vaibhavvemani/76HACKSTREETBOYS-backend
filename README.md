@@ -1,84 +1,50 @@
-🧠 NewsSense — Why Is My Fund Down?
+# 🧠 NewsSense — *Why Is My Fund Down?*
 
-NewsSense is an intelligent news-driven explanation engine that answers financial queries by analyzing real-time news scraped directly from the internet—without relying on any scraper APIs or news APIs. Designed for hackathons and finance enthusiasts, it helps users understand the causes behind mutual fund or stock fluctuations by tracing connections through company holdings and market events.
+**NewsSense** is an intelligent, news-based explanation engine that helps users understand why a particular stock or mutual fund is rising or falling — by analyzing **real-time news scraped directly from the web**, with **zero reliance on scraper APIs or news APIs**.
 
-⸻
+Built with a powerful **LangChain pipeline**, NewsSense tracks indirect relationships between mutual fund holdings and the latest financial events to generate smart, relevant answers.
 
-🚀 Features
-	•	🔍 Query-Based Insight: Users ask questions like “Why is QQQ down today?” and get concise, news-based answers.
-	•	🧠 LLM-Powered Ticker Detection: Fast and accurate ticker symbol extraction using Groq’s blazing fast inference engine.
-	•	🗂️ Context-Aware RAG Pipeline: Built with LangChain, the system fetches fund holdings, searches relevant news, and returns contextual insights.
-	•	🏛️ Holdings-Based Search: If the query is about a mutual fund, its underlying holdings are used to perform a deeper news correlation search.
-	•	🌐 Pure Web Scraping: Web scraping is done without any news APIs—fully custom HTML parsing from live sources.
-	•	🧩 Vector Database with FAISS: All relevant news is embedded and stored in a vector DB for high-speed semantic retrieval.
+---
 
-⸻
+## 🚀 Features
 
-🧰 Tech Stack
-	•	LangChain — Orchestrates the multi-step pipeline.
-	•	Groq LLMs — Fast inference for ticker identification.
-	•	FAISS — For storing and retrieving semantically similar news content.
-	•	SQLite — Lightweight DB to store historical fund and holdings data.
-	•	Custom Scrapers — Parses articles from the open web using raw HTML parsing.
-	•	Gemini / OpenAI — Powers the summarization and explanation generation step.
+- 🔍 **Ask Anything Finance** — Enter queries like _"Why is QQQ down today?"_ and get an AI-generated explanation from recent news.
+- ⚡ **Groq-Powered Ticker Detection** — Ultra-fast extraction of company or fund tickers from natural language.
+- 🧠 **LangChain RAG Pipeline** — Retrieval-Augmented Generation pipeline that connects tickers, holdings, and news stories.
+- 🏦 **Holdings Intelligence** — If a fund is queried, its holdings are used to identify potential causes in the market ecosystem.
+- 📰 **Custom Web Scraping** — Scrapes real-time news from the open web using in-house HTML parsing — **no APIs involved**.
+- 📚 **Vector Database (FAISS)** — Stores semantically embedded news articles for fast and relevant similarity search.
 
-⸻
+---
 
-🧠 How It Works
-	1.	User Query: A user asks a question like “Why is ARKK falling?”
-	2.	Ticker Extraction: The query is passed through Groq to extract the relevant ticker (e.g., ARKK).
-	3.	Fund Holdings Lookup: If the ticker corresponds to a mutual fund or ETF, its holdings are retrieved from stored SQLite data.
-	4.	News Scraping: Relevant financial articles are scraped from the web.
-	5.	Embedding + Vector Search: Articles are embedded and stored in FAISS. The system performs a similarity search based on holdings and query context.
-	6.	Answer Generation: An LLM summarizes the retrieved information into a human-readable explanation.
+## 🧰 Tech Stack
 
-⸻
+| Tool         | Purpose                                 |
+|--------------|------------------------------------------|
+| **LangChain** | Building the multi-step RAG pipeline    |
+| **Groq**      | Fast LLM inference for ticker detection |
+| **FAISS**     | Semantic vector search                  |
+| **SQLite**    | Fund and holdings data storage          |
+| **BeautifulSoup** | HTML scraping of financial news     |
+| **Gemini / OpenAI** | Summarization and explanation     |
 
-📸 Example
+---
 
-🧾 Query:
-"Why did QQQ drop this week?"
+## 🧠 How It Works
 
-🤖 NewsSense:
-"QQQ, which holds major tech stocks like Apple, Amazon, and Microsoft, saw a decline largely due to a recent drop in Big Tech earnings and a hawkish Fed statement signaling rate hikes. The market reacted negatively to this macroeconomic signal."
+1. **User Query** — e.g., _"Why is ARKK falling today?"_
+2. **Ticker Extraction** — Groq identifies the relevant ticker (`ARKK`).
+3. **Fund Holdings Lookup** — If it’s a mutual fund/ETF, we fetch its top holdings.
+4. **News Scraping** — Recent articles from the web are scraped and parsed.
+5. **Embedding + Search** — Articles are embedded and stored in **FAISS**. A similarity search retrieves the most relevant ones based on fund/company data.
+6. **LLM Explanation** — The retrieved context is passed to an LLM to generate a concise explanation.
 
+---
 
-⸻
+## 🖼 Example
 
-📦 Setup Instructions
-	1.	Clone the repo
+> **🧾 Query**:  
+> _"Why did QQQ drop this week?"_
 
-git clone https://github.com/yourusername/newsense.git
-cd newsense
-
-	2.	Install dependencies
-
-pip install -r requirements.txt
-
-	3.	Run the app
-
-python app.py
-
-	4.	Environment Setup
-
-Make sure to set up your .env file with necessary credentials (Groq API key, LLM provider API key, etc.).
-
-⸻
-
-🧪 Hackathon Highlights
-
-This project was originally built for a finance-focused hackathon, targeting the theme of interpretability and explainability in investing. The idea was to empower casual and retail investors with quick, credible, and interpretable explanations sourced from publicly available news.
-
-⸻
-
-🧠 Future Improvements
-	•	Add UI for inputting queries and visualizing fund data
-	•	Scheduled scraping and automatic news updates
-	•	Integration with official financial data APIs for validation (optional)
-	•	More sophisticated sentiment + trend analysis
-
-⸻
-
-📜 License
-
-This project is licensed under the MIT License.
+> **🤖 NewsSense**:  
+> _"QQQ, which holds major tech stocks like Apple, Amazon, and Microsoft, saw a decline largely due to a recent drop in Big Tech earnings and a hawkish Fed statement signaling rate hikes. The market reacted negatively to this macroeconomic signal."_
